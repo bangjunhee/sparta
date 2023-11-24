@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나만의 추억엘범</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Diphylleia&display=swap');
+
+        * {
+            font-family: 'Diphylleia', serif;
+        }
+
+        .mytitle {
+            height: 250px;
+            color: white;
+
+            /* 박스 내부 컨텐츠 정렬 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1511992243105-2992b3fd0410?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
+            background-position: center;
+            background-size: cover;
+
+        }
+
+        .mytitle>button {
+            width: 150px;
+            height: 50px;
+            background-color: transparent;
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .mycards {
+            width: 1200px;
+
+            margin: 30px auto 0px auto;
+        }
+
+
+        .mypostingbox {
+            width: 500px;
+            margin: 30px auto 0px auto;
+            padding: 20px;
+            box-shadow: 0px 0px 3px 0px blue;
+            border-radius: 5px;
+
+        }
+
+        .modal {
+            background-color: rgba(0, 0, 0, 0.3)
+        }
+
+        .modal-content {
+            width: 750px;
+            margin: 30px auto 0px auto;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .modal-revise {
+            background-color: white;
+            width: 580px;
+            margin: 30px auto 0px auto;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .mybtn {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mybtn>button {
+            margin-right: 5px;
+        }
+
+        .col {
+            cursor: pointer;
+        }
+
+        .close {
+            font-size: 20px;
+            width: 50px;
+            height: 30px;
+            margin: 0 5px 0 0;
+            cursor: pointer;
+        }
+    </style>
+    <script type="module">
+
+        // 미세먼지 정보 가져오기
+        let url = "http://spartacodingclub.shop/sparta_api/seoulair";
+        fetch(url).then(res => res.json()).then(data => {
+            let mise = data['RealtimeCityAir']['row'][0]['IDEX_MVL']
+            $('#misecheck').text(mise);
+        })
+
+
+
+
+        // 페이지 불러오기가 완료되면 실행 (type="module"인 경우 실행 x)
+        // $(document).ready(function () {
+        //     alert('안녕!');
+        // })
+
+
+        // Firebase SDK 라이브러리 가져오기
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getDocs, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+
+
+        // Firebase 구성 정보 설정
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyBitzLGHE2KDhV79p1ntheL_AFO0kxF1oQ",
+            authDomain: "sparta-ee69b.firebaseapp.com",
+            projectId: "sparta-ee69b",
+            storageBucket: "sparta-ee69b.appspot.com",
+            messagingSenderId: "440956444654",
+            appId: "1:440956444654:web:100ec9abc00c537b28b8ff",
+            measurementId: "G-6RBHMNPL9S"
+        };
+
+        // Firebase 인스턴스 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+
+        // 문서ID저장 전역변수
+        let selectedDocumentId;
+
+        // 앨범 카드 불러오기
+        let docs = await getDocs(collection(db, "albums"));
+        docs.forEach((doc) => {
+            selectedDocumentId = doc.id;
+            console.log(selectedDocumentId)
+            let row = doc.data();
+
+            let image = row['image'];
+            let title = row['title'];
+            let content = row['content'];
+            let date = row['date'];
+            let temp_html = `
+                        <div class="col">
+                            <div class="card h-100">
+                                <img class="cardimg"
+                                    src="${image}"
+                                    class="card-img-top" alt="...">
+                                <div class="card-body">
+                                    <h5 class="card-title">${title}</h5>
+                                    <p class="card-text">${content}</p>
+                                </div>
+                                <div class="card-footer">
+                                    <small class="text-body-secondary">${date}</small>
+                                </div>
+                                
+                                <div class="doc-id" id="docID" style="display: none;">${selectedDocumentId}</div>
+                            </div>
+                            
+                        </div>
+                        `;
+            $('#card').append(temp_html)
+
+        });
+
+        // 카드 추가하기
+        $("#postingbtn").click(async function () {
+            const postingconfirm = confirm('추억을 기록할까요?');
+            if (postingconfirm) {
+                let image = $('#image').val();
+                let title = $('#title').val();
+                let content = $('#content').val();
+                let date = $('#date').val();
+                let doc = {
+                    'image': image,
+                    'title': title,
+                    'content': content,
+                    'date': date
+                };
+                await addDoc(collection(db, "albums"), doc);
+
+                alert('기록되었습니다.');
+                window.location.reload();
+            }
+
+        })
+
+
+
+        $("#postingboxopen").click(async function () {
+            $('#postingbox').toggle();
+        })
+        $("#postingboxclose").click(async function () {
+            $('#postingbox').toggle();
+        })
+
+
+
+
+        // 이벤트 위임
+        // 동적으로 생성된 데이터는 이벤트 핸들러에 등록이 안됨
+        // 즉 이벤트 위임을 이용해 핸들러에 할당
+        // onclick은 왜 가능했나?
+        // 이는 html 코드에 직접 이벤트 핸들러를 할당했기 때문
+        // 이벤트 핸들러는 최초에 불러올 때 객체에 할당해줌
+        // 그런데 동적으로 생성된 데이터, 즉 페이지가 불러와지고 나중에 생성된 데이터는 이벤트 핸들러가 할당이 안됨
+        // 이미 페이지를 불러올 때 모두 할당됐기 때문
+        // 때문에 on메서드를 이용해 이벤트를 자식 요소에 할당해야 함
+        // $("#card").on("click", ".col", function ()
+        // #card -> 이벤트를 연결할 요소
+        // click -> 등록할 이벤트 종류. 여기선 클릭
+        // .col -> 이벤트를 위임할 자식요소
+        // function() -> 이벤트 발생시 실행할 함수
+
+
+        // 카드 클릭 시 팝업띄우기
+        $("#card").on("click", ".col", function () {
+            $('#modalcontent').empty();
+
+            let image = $(this).find('.cardimg').attr('src');
+            let title = $(this).find('.card-title').text();
+            let content = $(this).find('.card-text').text();
+            let date = $(this).find('.text-body-secondary').text();
+            selectedDocumentId = $(this).find('.doc-id').text();
+            console.log(docID);
+            let temp_html_modal = `
+            <div class="col2">
+                <div class="card h-100">
+                    <img src=${image}
+                    <div class="card-body">
+                        <h5 class="card-title">${title}</h5>
+                        <p class="card-text">${content}</p>
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-body-secondary">${date}</small>
+                    </div>
+                </div>
+                <div class="mybtn">
+                    <button id="revisebtn" type="button" class="btn btn-outline-info">
+                        <span class="doc-id" style="display: none;">${selectedDocumentId}</span>
+                        수정</button>
+                    <button id="deletebtn" type="button" class="btn btn-outline-danger">
+                        <span class="doc-id" style="display: none;">${selectedDocumentId}</span>
+                        삭제</button>
+                </div>
+            </div>`;
+            $('#modalcontent').append(temp_html_modal);
+            $('#myModal').show();
+
+
+        })
+
+        $("#myModal").on("click", "#deletebtn", async function () {
+            // 삭제할 문서의 ID 가져오기
+            selectedDocumentId = $(this).find('.doc-id').text();
+            console.log(selectedDocumentId);
+
+            const deleteconfirm = confirm('정말로 삭제하시겠습니까?');
+
+            if (deleteconfirm) {
+                // Firebase에서 문서 삭제
+                await deleteDoc(doc(db, "albums", selectedDocumentId));
+
+                alert('삭제되었습니다.');
+                window.location.reload();
+            }
+            else {
+                alert('삭제가 취소되었습니다.');
+            }
+
+
+        });
+        $("#myModal").on("click", "#revisebtn", async function () {
+            $('#myModal').hide();
+            $('#revisecontent').empty();
+            // 수정할 문서의 ID 가져오기
+            selectedDocumentId = $(this).find('.doc-id').text();
+            console.log(selectedDocumentId);
+            // doc메서드는 문서의 참조를 얻는거고 구성요소를 얻으려면 getDoc사용
+            let revisedata = await getDoc(doc(db, "albums", selectedDocumentId));
+            console.log(revisedata);
+            let row = revisedata.data();
+            console.log(row);
+
+
+
+            let temp_html_reviseInfo = `
+            <div class="mypostingbox" id="postingbox">
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control" id="revise-image" placeholder="앨범 이미지">
+                    <label for="floatingInput">앨범 이미지</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control" id="revise-title" placeholder="앨범 제목">
+                    <label for="floatingInput">앨범 제목</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control" id="revise-content" placeholder="앨범 내용">
+                    <label for="floatingInput">앨범 내용</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control" id="revise-date" placeholder="앨범 날짜">
+                    <label for="floatingInput">앨범 날짜</label>
+                </div>
+            </div>`
+            $('#revisecontent').append(temp_html_reviseInfo);
+
+            let currentImage = row['image'];
+            let currentTitle = row['title'];
+            let currentContent = row['content'];
+            let currentDate = row['date'];
+
+            // 폼에 정보 입력
+            $('#revise-image').val(currentImage);
+            $('#revise-title').val(currentTitle);
+            $('#revise-content').val(currentContent);
+            $('#revise-date').val(currentDate);
+
+            $('#reviseModal').show();
+        });
+
+        $("#editCompleteBtn").click(async function () {
+            // 수정할 카드의 ID가 유효한지 확인
+            if (selectedDocumentId) {
+                // 수정된 정보 가져오기
+                let revise_image = $('#revise-image').val();
+                let revise_title = $('#revise-title').val();
+                let revise_content = $('#revise-content').val();
+                let revise_date = $('#revise-date').val();
+
+                // Firebase에서 문서 수정
+                await updateDoc(doc(db, "albums", selectedDocumentId), {
+                    image: revise_image,
+                    title: revise_title,
+                    content: revise_content,
+                    date: revise_date
+                });
+
+                alert('수정되었습니다.');
+                window.location.reload();
+            } else {
+                console.error("수정할 카드의 ID가 없습니다.");
+            }
+        });
+
+        $("#close").click(async function () {
+            $('#myModal').hide();
+        })
+        $("#reviseclose").click(async function () {
+            $('#reviseModal').hide();
+        })
+
+
+
+
+    </script>
+</head>
+
+<body>
+    <div class="mytitle">
+        <h1>나만의 추억앨범</h1>
+        <p>현재 서울의 미세먼지: <span id="misecheck">좋음</span> </p>
+        <button id="postingboxopen">추억 저장하기</button>
+    </div>
+    <div class="mypostingbox" id="postingbox">
+        <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="image" placeholder="앨범 이미지">
+            <label for="floatingInput">앨범 이미지</label>
+        </div>
+        <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="title" placeholder="앨범 제목">
+            <label for="floatingInput">앨범 제목</label>
+        </div>
+        <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="content" placeholder="앨범 내용">
+            <label for="floatingInput">앨범 내용</label>
+        </div>
+        <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="date" placeholder="앨범 날짜">
+            <label for="floatingInput">앨범 날짜</label>
+        </div>
+        <div class="mybtn">
+            <button id="postingbtn" type="button" class="btn btn-primary">기록하기</button>
+            <button id="postingboxclose" type="button" class="btn btn-outline-info">닫기</button>
+        </div>
+    </div>
+    <div class="mycards">
+        <div id="card" class="row row-cols-1 row-cols-md-4 g-4">
+        </div>
+
+    </div>
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span id="close" class="close">닫기</span>
+            <p id="modalcontent"></p>
+        </div>
+    </div>
+    <div id="reviseModal" class="modal">
+        <div class="modal-revise">
+            <p id="revisecontent"></p>
+            <div class="mybtn">
+                <button id="editCompleteBtn" type="button" class="btn btn-primary">수정하기</button>
+                <button id="reviseclose" type="button" class="btn btn-outline-info">닫기</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
